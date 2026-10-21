@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "setup": "prisma db push && prisma db seed",
+    "setup:turso": "tsx prisma/turso-setup.ts && prisma db seed",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"

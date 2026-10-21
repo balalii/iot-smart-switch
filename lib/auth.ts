@@ -19,6 +19,8 @@ const MAX_AGE = 60 * 60 * 24 * 90; // 90 hari, biar nggak tiap buka harus PIN la
 
 function loadSecret() {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  // folder proyek di Vercel read-only, rahasia nggak bisa disimpan ke file
+  if (process.env.VERCEL) throw new Error('SESSION_SECRET belum diisi di Environment Variables Vercel.');
   const dir = path.join(process.cwd(), 'data');
   const file = path.join(dir, '.session-secret');
   if (fs.existsSync(file)) return fs.readFileSync(file, 'utf8').trim();

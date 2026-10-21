@@ -11,13 +11,14 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { dbConfig } from '../lib/db-config';
 import { PrismaClient } from '../lib/generated/prisma/client';
 import { newDeviceData } from '../lib/provision';
 
 const DEVICE_COUNT = 12;
 
 const db = new PrismaClient({
-  adapter: new PrismaLibSql({ url: process.env.DATABASE_URL ?? 'file:./data/switch.db' }),
+  adapter: new PrismaLibSql(dbConfig()),
 });
 
 async function main() {
