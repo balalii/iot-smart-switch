@@ -1,0 +1,127 @@
+// Skema database Smart Switch (SQLite lewat libSQL).
+// 1 Device = 1 ESP32 + modul relay 4 channel. Semua logika (timer, jadwal, interlock)
+// dihitung di server, ESP32 cuma nurut — lihat lib/engine.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Device {
+  id          String @id // kode tetap yang ditanam di ESP32, mis. "sw01"
+  slug        String @unique // path URL, boleh diganti kapan saja
+  name        String
+  owner       String @default("")
+  description String @default("")
+  accent      String @default("amber")
+  template    String @default("rumah")
+
+  // akses
+  pinHash        String
+  requirePin     Boolean @default(true)
+  sessionVersion Int     @default(1) // naik tiap PIN diganti -> semua sesi lama logout
+  token          String  @unique // rahasia ESP32, dikirim di header X-Device-Token
+
+  // perilaku
+  schedulesOn Boolean @default(true) // false = "mode libur", semua jadwal dijeda
+  tariff      Float   @default(1444.7) // Rupiah per kWh
+  activeLow   Boolean @default(true) // modul relay nyala saat pin LOW
+  pollMs      Int     @default(1000)
+  failsafe    String  @default("keep") // keep | off — kalau server nggak bisa dihubungi
+  failsafeSec Int     @default(60)
+  configVer   Int     @default(1) // naik tiap config hardware berubah, dikirim ke ESP32
+
+  // telemetri dari ESP32
+  lastSeen  DateTime?
+  online    Boolean   @default(false) // dipakai buat deteksi transisi online/offline
+  rssi      Int       @default(0)
+  uptime    Int       @default(0)
+  ip        String    @default("")
+  fw        String    @default("")
+  createdAt DateTime  @default(now())
+
+  channels  Channel[]
+  schedules Schedule[]
+  scenes    Scene[]
+  logs      Log[]
+  usage     Usage[]
+}
+
+model Channel {
+  id       Int    @id @default(autoincrement())
+  deviceId String
+  index    Int // 0..3 = CH1..CH4
+  device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  // kustomisasi
+  name      String
+  icon      String  @default("lamp")
+  watt      Float   @default(10)
+  visible   Boolean @default(true)
+  behavior  String  @default("toggle") // toggle | pulse
+  pulseSec  Int     @default(1)
+  maxOnMin  Int     @default(0) // 0 = tanpa batas
+  interlock Int     @default(0) // 0 = bebas; channel dgn grup sama nggak boleh nyala bareng
+  bootState String  @default("last") // last | off | on — dipakai ESP32 saat baru nyala
+
+  // state
+  on             Boolean   @default(false)
+  onSince        DateTime?
+  statsMark      DateTime? // titik terakhir durasi nyala dicatat ke Usage
+  timerEndsAt    DateTime?
+  timerReason    String    @default("") // timer | pulse
+  pulsePending   Boolean   @default(false) // pulse belum terkirim ke ESP32
+  scheduleTarget Boolean?
+  reported       Boolean? // state terakhir yang dilaporkan ESP32
+
+  @@unique([deviceId, index])
+}
+
+model Schedule {
+  id       String  @id @default(cuid())
+  deviceId String
+  device   Device  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  label    String  @default("")
+  enabled  Boolean @default(true)
+  onTime   String // "18:00"
+  offTime  String // "22:00"; <= onTime artinya lewat tengah malam
+  days     Int     @default(127) // bitmask, bit 0 = Minggu ... bit 6 = Sabtu
+  channels Int     @default(1) // bitmask, bit 0 = CH1 ... bit 3 = CH4
+  sort     Int     @default(0)
+}
+
+model Scene {
+  id       String @id @default(cuid())
+  deviceId String
+  device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  name     String
+  icon     String @default("sparkles")
+  actions  String // JSON 4 elemen: true = nyala, false = mati, null = biarkan
+  sort     Int    @default(0)
+}
+
+model Log {
+  id       Int      @id @default(autoincrement())
+  deviceId String
+  device   Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  at       DateTime @default(now())
+  channel  Int? // null = level perangkat
+  source   String // ui | jadwal | timer | tombol | skenario | perangkat | sistem | admin
+  message  String
+
+  @@index([deviceId, at])
+}
+
+model Usage {
+  deviceId String
+  device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  channel  Int
+  date     String // "2026-10-21" (jam Asia/Jakarta)
+  onMs     Int    @default(0)
+
+  @@id([deviceId, channel, date])
+}

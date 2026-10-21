@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --- token warna. tema terang default, .dark di <html> buat tema gelap --- */
+
+:root {
+  --bg: oklch(0.965 0.006 85);
+  --surface: oklch(0.995 0.002 85);
+  --surface-2: oklch(0.94 0.007 85);
+  --line: oklch(0.89 0.008 85);
+  --ink: oklch(0.2 0.01 260);
+  --muted: oklch(0.5 0.012 260);
+  --danger: oklch(0.58 0.2 25);
+  --ok: oklch(0.6 0.15 155);
+  --accent: oklch(0.78 0.16 75);
+  --on-accent: oklch(0.18 0.01 260);
+  --shadow: 0 1px 2px rgb(20 20 30 / 0.06), 0 8px 24px -12px rgb(20 20 30 / 0.12);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: oklch(0.17 0.008 260);
+  --surface: oklch(0.21 0.009 260);
+  --surface-2: oklch(0.25 0.01 260);
+  --line: oklch(0.3 0.01 260);
+  --ink: oklch(0.95 0.005 85);
+  --muted: oklch(0.68 0.01 260);
+  --danger: oklch(0.68 0.19 25);
+  --ok: oklch(0.72 0.15 155);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -14px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+/* warna aksen per perangkat, dipilih pemiliknya di Pengaturan */
+[data-accent="amber"] { --accent: oklch(0.8 0.16 78); }
+[data-accent="orange"] { --accent: oklch(0.72 0.17 50); }
+[data-accent="rose"] { --accent: oklch(0.68 0.19 15); }
+[data-accent="violet"] { --accent: oklch(0.66 0.18 295); }
+[data-accent="sky"] { --accent: oklch(0.72 0.14 235); }
+[data-accent="teal"] { --accent: oklch(0.74 0.12 190); }
+[data-accent="emerald"] { --accent: oklch(0.72 0.15 158); }
+[data-accent="lime"] { --accent: oklch(0.84 0.18 128); }
+
+/* dihitung di elemen yang sama dengan --accent, biar ikut berubah per perangkat */
+:root,
+[data-accent] {
+  --accent-soft: color-mix(in oklch, var(--accent) 18%, var(--surface));
+  --accent-ink: color-mix(in oklch, var(--accent) 60%, var(--ink));
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --shadow-card: var(--shadow);
+}
+
+@theme {
+  --animate-rise: rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pulse-dot: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+html {
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* angka timer & statistik pakai lebar tetap biar nggak goyang tiap detik */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* <dialog> dipakai sebagai bottom sheet di HP, modal di layar lebar */
+dialog.sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 34rem;
+  max-height: 92dvh;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+dialog.sheet::backdrop {
+  background: rgb(10 10 15 / 0.45);
+  backdrop-filter: blur(2px);
+}
+
+dialog.sheet[open] {
+  animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (min-width: 640px) {
+  dialog.sheet {
+    margin: auto;
+  }
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
