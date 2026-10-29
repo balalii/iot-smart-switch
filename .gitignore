@@ -46,6 +46,3 @@ next-env.d.ts
 
 # database & rahasia lokal
 /data/
-
-# firmware: file setting hasil setup di ESP32
-/firmware/settings.json

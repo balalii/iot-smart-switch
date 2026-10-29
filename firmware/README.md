@@ -1,23 +1,16 @@
 # Firmware ESP32 (MicroPython)
 
-Kode yang sama dipasang di 12 ESP32. Yang membedakan tiap ESP32 hanya isian
-di halaman setup (WiFi, server, ID, token), dan isian itu disimpan di flash ESP32.
+Cukup **satu file: `main.py`**. Cara kerjanya:
 
-| File          | Isi                                                            |
-| ------------- | -------------------------------------------------------------- |
-| `pins.py`     | **konfigurasi hardware**: pin relay, tombol, LED               |
-| `app.py`      | class `SmartSwitch`, menggabungkan semua bagian                |
-| `relays.py`   | class `RelayBank`: 4 relay, active-LOW, interlock, pulse       |
-| `inputs.py`   | class `Buttons`, `HoldButton`, `StatusLed`                     |
-| `net.py`      | class `WifiManager` & `CloudSync`                              |
-| `portal.py`   | class `SetupPortal`: hotspot + halaman setup                   |
-| `storage.py`  | baca/tulis JSON di flash                                       |
-| `main.py`     | titik masuk                                                    |
-| `boot.py`     | dijalankan sebelum `main.py`                                   |
+1. ESP32 menyambung ke WiFi yang ditulis di `main.py`.
+2. Tiap detik ESP32 melapor ke server dan mengambil perintah.
+3. Relay dikontrol dari HP lewat portal web. Tidak ada hotspot setup atau tombol fisik.
+
+Yang beda di tiap ESP32 hanya 5 baris di bagian atas `main.py`: WiFi, password, server, ID, dan token.
 
 ## 1. Flash MicroPython ke ESP32 (sekali per board)
 
-Cara termudah adalah lewat **Thonny** ([thonny.org](https://thonny.org)):
+Lewat **Thonny** ([thonny.org](https://thonny.org)):
 
 1. Colok ESP32 ke laptop.
 2. Thonny → **Tools → Options → Interpreter** → pilih *MicroPython (ESP32)*.
@@ -27,58 +20,52 @@ Cara termudah adalah lewat **Thonny** ([thonny.org](https://thonny.org)):
 Kalau board tidak terdeteksi, install driver USB CP210x atau CH340 sesuai chip di board-nya.
 Saat proses install, tahan tombol **BOOT** kalau diminta.
 
-## 2. Upload kode
+## 2. Isi pengaturan & upload
 
-**Thonny:** buka folder `firmware/` di panel *Files*. Pilih semua file `.py`, klik kanan,
-lalu pilih **Upload to /**. Setelah itu tekan tombol **EN/RST** di board.
+1. Di Thonny, buka `firmware/main.py`.
+2. Ganti 5 baris di bagian **ISI SEBELUM UPLOAD**:
 
-**Atau pakai terminal (mpremote):**
+   ```python
+   WIFI_SSID = "WiFi-Rumah"                      # WiFi 2.4 GHz, bukan 5 GHz
+   WIFI_PASSWORD = "password-wifi"
+   SERVER = "https://nama-proyek.vercel.app"     # tanpa / di akhir
+   DEVICE_ID = "sw01"                            # dari /admin -> Kelola
+   DEVICE_TOKEN = "..."                          # dari /admin -> Kelola
+   ```
 
-```bash
-pip install mpremote
-```
+3. **File → Save copy…** → pilih **MicroPython device** → simpan dengan nama `main.py`.
+4. Tekan tombol **EN/RST** di board.
 
-```bash
-cd firmware && mpremote cp *.py : && mpremote reset
-```
+Isian WiFi & token cukup ada di ESP32. Jangan simpan isian itu ke file di laptop
+(tutup tab tanpa menyimpan), biar token tidak ikut ter-commit ke git.
 
-Ulangi untuk ke-12 ESP32. Kodenya sama semua, tidak ada yang perlu diedit.
+Di panel *Shell* akan muncul `Terhubung! IP: ...` lalu `Smart Switch siap`. Di halaman
+admin, perangkatnya berubah jadi **Online**.
 
-## 3. Setup WiFi & identitas (dari HP)
+Ulangi langkah 2 untuk tiap ESP32 dengan `DEVICE_ID` dan `DEVICE_TOKEN` masing-masing.
 
-ESP32 yang belum di-setup otomatis masuk **mode setup** (LED biru kedip cepat).
+**Pindah WiFi atau ganti token:** ulangi langkah 2, lalu timpa `main.py` di ESP32.
 
-1. Di HP, sambungkan ke WiFi **`Saklar-xxxx`**, password **`saklar123`**.
-2. Halaman setup biasanya muncul sendiri. Kalau tidak, buka **http://192.168.4.1**.
-3. Isi:
-   - **WiFi** dan password di lokasi pemasangan
-   - **Alamat server**, misal `https://saklar.domainmu.com` (tanpa `/` di akhir)
-   - **ID perangkat** dan **Token**, dari halaman **Admin → Kelola**
-4. Tekan **Simpan & restart**.
-
-ESP32 akan restart dan tersambung. Di halaman admin, perangkatnya berubah jadi **Online**.
-
-Untuk pindah WiFi atau mengganti token: **tahan tombol BOOT 5 detik** saat ESP32 menyala,
-maka ESP32 masuk mode setup lagi. Isian lama tetap terisi, dan mode ini menutup sendiri
-setelah 5 menit kalau tidak ada yang disimpan.
+**Upgrade dari firmware lama (yang banyak file):** hapus dulu file lama di ESP32 lewat panel
+*Files* Thonny (`app.py`, `inputs.py`, `net.py`, `pins.py`, `portal.py`, `relays.py`,
+`storage.py`, `settings.json`). `boot.py`, `config.json`, dan `state.json` boleh dibiarkan.
 
 ## Arti LED biru
 
-| Pola                          | Artinya                                         |
-| ----------------------------- | ----------------------------------------------- |
-| kedip cepat terus             | mode setup, sambungkan HP ke hotspot `Saklar-…` |
-| kedip pelan (1 detik)         | sedang menyambung ke WiFi                       |
-| kedip singkat tiap 3 detik    | normal, tersambung ke server                    |
-| kedip 2x tiap 2 detik         | WiFi tersambung, tapi server tidak menjawab     |
+| Pola                          | Artinya                                              |
+| ----------------------------- | ---------------------------------------------------- |
+| kedip cepat terus             | isian di bagian atas `main.py` belum diganti         |
+| kedip pelan (1 detik)         | sedang menyambung ke WiFi                            |
+| kedip singkat tiap 3 detik    | normal, tersambung ke server                         |
+| kedip 2x tiap 2 detik         | WiFi tersambung, tapi server tidak menjawab          |
 
 ## Perilaku penting
 
 - **Listrik padam:** kondisi relay disimpan di flash. Saat menyala lagi, tiap channel mengikuti
   pengaturan "Saat ESP32 baru menyala" (seperti terakhir / selalu mati / selalu nyala),
   bahkan sebelum ada internet.
-- **Internet putus:** relay tetap di kondisi terakhir, dan tombol fisik tetap berfungsi. Tekanan
-  tombol dilaporkan ke server begitu tersambung lagi. Kalau failsafe diset "Matikan semua",
-  relay dimatikan setelah N detik tanpa server.
+- **Internet putus:** relay tetap di kondisi terakhir, ESP32 terus mencoba menyambung lagi.
+  Kalau failsafe diset "Matikan semua", relay dimatikan setelah N detik tanpa server.
 - **Tekan sesaat (pulse):** durasinya dihitung oleh ESP32 sendiri, jadi tetap presisi walau internet lambat.
 - **Interlock:** ESP32 mematikan dulu channel lawannya dan memberi jeda 300 ms sebelum
   menyalakan, aman untuk motor dua arah.
@@ -86,11 +73,12 @@ setelah 5 menit kalau tidak ada yang disimpan.
 
 ## Troubleshooting
 
-Buka **Serial Monitor** di Thonny (panel *Shell*), lalu tekan EN/RST untuk melihat log.
+Buka panel *Shell* di Thonny, lalu tekan EN/RST untuk melihat log.
 
 | Pesan                                        | Solusi                                                   |
 | -------------------------------------------- | -------------------------------------------------------- |
-| `WiFi gagal tersambung`                      | password WiFi salah: tahan BOOT 5 dtk, setup ulang        |
+| `Isi dulu WIFI_SSID, ...`                    | 5 baris di atas `main.py` belum diganti                  |
+| `WiFi gagal tersambung`                      | nama/password WiFi salah, atau WiFi-nya 5 GHz            |
 | `Token / ID ditolak server`                  | token salah atau sudah dibuat ulang di admin             |
-| `Gagal menghubungi server`                   | cek alamat server, coba buka alamat itu dari HP          |
+| `Gagal menghubungi server`                   | cek `SERVER`, coba buka alamat itu dari HP               |
 | Relay nyala/mati terbalik                    | Pengaturan → Perangkat keras → matikan "Relay aktif LOW" |

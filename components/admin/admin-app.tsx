@@ -297,7 +297,7 @@ function ManageSheet({
           <div>
             <h3 className="text-sm font-semibold">Setup ESP32</h3>
             <p className="mt-0.5 text-xs text-muted">
-              Isi 3 nilai ini di halaman setup ESP32 (WiFi “Saklar-…”, buka 192.168.4.1).
+              Isi 3 nilai ini (plus WiFi) di bagian atas firmware/main.py sebelum upload ke ESP32.
             </p>
           </div>
           <CopyRow label="Server" value={origin} />
@@ -319,7 +319,7 @@ function ManageSheet({
             size="sm"
             variant="ghost"
             onClick={async () => {
-              if (!window.confirm('Buat token baru? ESP32 dengan token lama akan berhenti tersambung sampai di-setup ulang.')) return;
+              if (!window.confirm('Buat token baru? ESP32 dengan token lama akan berhenti tersambung sampai main.py-nya di-upload ulang dengan token baru.')) return;
               const data = await patch({ regenerateToken: true }, 'Token baru dibuat');
               if (data?.token) setToken(data.token);
             }}

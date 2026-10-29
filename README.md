@@ -15,8 +15,8 @@ toko, gorden/motor, atau kustom) tanpa mengubah kode.
 ```
 
 Timer, jadwal, dan skenario dihitung di server. ESP32 cukup melapor tiap detik dan
-mengikuti jawaban server. Selain itu ESP32 tetap punya kecerdasan lokal: tombol fisik,
-pulse yang presisi, simpan kondisi setelah listrik padam, dan failsafe.
+mengikuti jawaban server. Selain itu ESP32 tetap punya kecerdasan lokal: pulse yang
+presisi, simpan kondisi setelah listrik padam, dan failsafe.
 
 ## Fitur
 
@@ -46,7 +46,7 @@ pulse yang presisi, simpan kondisi setelah listrik padam, dan failsafe.
 
 - Status 12 perangkat sekaligus: online/offline, sinyal, kondisi 4 channel
 - Ubah nama, pemilik, dan path; reset PIN; wajib PIN
-- Lihat atau buat ulang token ESP32, beserta nilai yang perlu diisi di halaman setup
+- Lihat atau buat ulang token ESP32, beserta nilai yang perlu diisi di `firmware/main.py`
 - Tambah perangkat ke-13 dan seterusnya, atau hapus perangkat
 
 ## Kenapa nggak di Vercel
@@ -116,16 +116,7 @@ Semua data ada di folder `data/` (`switch.db`, rahasia sesi, dan daftar akun). C
 | IN3             | GPIO25 (D25)    |
 | IN4             | GPIO33 (D33)    |
 
-Tombol fisik (opsional): satu kaki ke pin, kaki lainnya ke GND. Pull-up internal sudah aktif.
-
-| Tombol | ESP32  |
-| ------ | ------ |
-| CH1    | GPIO32 |
-| CH2    | GPIO14 |
-| CH3    | GPIO13 |
-| CH4    | GPIO4  |
-
-Pin bisa diganti di [firmware/pins.py](firmware/pins.py). Untuk beban 220V, pastikan
+Pin bisa diganti di bagian *Hardware* [firmware/main.py](firmware/main.py). Untuk beban 220V, pastikan
 modul relay sesuai kapasitas arusnya, dan pasang di dalam box tertutup.
 
 ## Firmware ESP32
@@ -133,8 +124,8 @@ modul relay sesuai kapasitas arusnya, dan pasang di dalam box tertutup.
 Firmware MicroPython ada di folder [firmware/](firmware/). Panduan *flash*, upload, dan setup
 WiFi ada di [firmware/README.md](firmware/README.md).
 
-Singkatnya, kode **sama persis untuk 12 ESP32**. WiFi, alamat server, ID, dan token diisi lewat
-hotspot setup `Saklar-xxxx` dari HP, tanpa mengedit kode.
+Singkatnya, cukup **satu file `main.py`**. Sebelum upload, isi WiFi, alamat server, ID, dan token
+di bagian atas file itu. ID dan token beda untuk tiap ESP32.
 
 ## API
 
